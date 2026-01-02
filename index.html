@@ -1,0 +1,394 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Programme de Réception</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    /* IMPORTANT: A4 + marges d'impression */
+    @page { size: A4; margin: 0; }
+
+    :root{
+      --bg1:#0b1220;
+      --bg2:#101a33;
+      --stroke:#ffffff1f;
+      --text:#f5f7ff;
+      --muted:#c8d1ffcc;
+      --accent:#86f7d1;
+      --accent2:#7aa7ff;
+      --shadow: 0 18px 60px rgba(0,0,0,.45);
+      --r: 22px;
+    }
+
+    *{ box-sizing:border-box; }
+
+    /* Écran */
+    body{
+      margin:0;
+      min-height:100vh;
+      color:var(--text);
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background:
+        radial-gradient(1200px 600px at 10% 10%, rgba(134,247,209,.22), transparent 60%),
+        radial-gradient(1000px 700px at 90% 30%, rgba(122,167,255,.20), transparent 60%),
+        radial-gradient(900px 700px at 50% 110%, rgba(247,210,122,.18), transparent 55%),
+        linear-gradient(180deg, var(--bg1), var(--bg2));
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:24px;
+    }
+
+    /* A4 EXACT: tout doit rentrer ici */
+    .page{
+      width:210mm;
+      height:297mm;
+      position:relative;
+      padding:12mm;                 /* marge interne A4 (modifiable) */
+      border-radius: calc(var(--r) + 8px);
+    }
+
+    .frame{
+      position:absolute;
+      inset:0;
+      border-radius: calc(var(--r) + 8px);
+      padding:12mm;
+      pointer-events:none;
+      background: linear-gradient(135deg, rgba(255,255,255,.10), rgba(255,255,255,0)) border-box;
+      -webkit-mask:
+        linear-gradient(#000 0 0) content-box,
+        linear-gradient(#000 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      border:1px solid transparent;
+    }
+
+    .card{
+      height:100%;
+      border-radius: var(--r);
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+      border:1px solid var(--stroke);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+      position:relative;
+
+      /* ✅ clé : pour que main prenne le reste */
+      display:flex;
+      flex-direction:column;
+    }
+
+    .noise{
+      position:absolute; inset:0;
+      opacity:.10;
+      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)' opacity='.6'/%3E%3C/svg%3E");
+      mix-blend-mode: overlay;
+      pointer-events:none;
+    }
+
+    header{
+      padding:18px 22px 12px;
+      position:relative;
+      flex: 0 0 auto; /* ne grandit pas */
+    }
+
+    .badge{
+      display:inline-flex;
+      gap:10px;
+      align-items:center;
+      padding:9px 12px;
+      border-radius: 999px;
+      border:1px solid var(--stroke);
+      background: rgba(15,27,51,.55);
+      backdrop-filter: blur(10px);
+      font-weight:600;
+      letter-spacing:.3px;
+      color: var(--muted);
+      width: fit-content;
+      font-size: 13px;
+    }
+
+    .dot{
+      width:10px; height:10px; border-radius:999px;
+      background: linear-gradient(180deg, var(--accent), var(--accent2));
+      box-shadow: 0 0 0 6px rgba(134,247,209,.10);
+    }
+
+    h1{
+      margin:12px 0 6px;
+      font-family: "Playfair Display", serif;
+      font-weight:700;
+      font-size: 30px; /* fixe pour A4 */
+      line-height:1.05;
+      letter-spacing:.2px;
+    }
+
+    .subtitle{
+      margin:0;
+      color: var(--muted);
+      font-size: 13.5px; /* réduit pour A4 */
+      line-height:1.45;
+      max-width: 78ch;
+    }
+
+    .topline{
+      margin-top:12px;
+      display:grid;
+      grid-template-columns: 1.25fr .75fr;
+      gap:12px;
+      align-items:stretch;
+    }
+
+    .info{
+      border-radius: 16px;
+      border:1px solid var(--stroke);
+      background: rgba(15,27,51,.45);
+      backdrop-filter: blur(10px);
+      padding:12px;
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:10px;
+    }
+
+    .k{
+      color: var(--muted);
+      font-size: 11px;
+      letter-spacing:.35px;
+      text-transform: uppercase;
+      margin-bottom:4px;
+    }
+
+    .v{
+      font-weight:600;
+      font-size: 13px;
+      line-height:1.25;
+    }
+
+    .host{
+      border-radius: 16px;
+      border:1px solid var(--stroke);
+      background: linear-gradient(135deg, rgba(134,247,209,.14), rgba(122,167,255,.08));
+      padding:12px;
+      position:relative;
+      overflow:hidden;
+    }
+
+    .host::before{
+      content:"";
+      position:absolute; inset:-80px -80px auto auto;
+      width:220px; height:220px;
+      background: radial-gradient(circle at 30% 30%, rgba(247,210,122,.35), transparent 60%);
+      transform: rotate(20deg);
+      pointer-events:none;
+    }
+
+    .host .label{
+      color: var(--muted);
+      font-size: 11px;
+      letter-spacing:.35px;
+      text-transform: uppercase;
+      margin-bottom:6px;
+    }
+
+    .host .names{
+      font-family:"Playfair Display", serif;
+      font-size: 18px;
+      font-weight:700;
+      line-height:1.2;
+    }
+
+    .host .note{
+      margin-top:8px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height:1.35;
+    }
+
+    /* ✅ MAIN PREND TOUT L'ESPACE RESTANT */
+    main{
+      padding: 10px 22px 10px;
+      flex: 1 1 auto;
+      min-height: 0;               /* important pour éviter overflow */
+      display:block;               /* ✅ 1 seule colonne */
+    }
+
+    /* ✅ la section couvre tout le main */
+    .schedule{
+      height: 100%;
+      border-radius: 16px;
+      border:1px solid var(--stroke);
+      background: rgba(15,27,51,.45);
+      backdrop-filter: blur(10px);
+      padding:14px;
+      overflow:auto;               /* si trop long : scroll en écran */
+    }
+
+    .section-title{
+      display:flex;
+      justify-content:space-between;
+      align-items:baseline;
+      gap:10px;
+      margin-bottom:10px;
+    }
+
+    .section-title h2{
+      margin:0;
+      font-size: 12px;
+      letter-spacing:.35px;
+      text-transform: uppercase;
+      color: var(--muted);
+      font-weight:700;
+    }
+
+    .section-title span{
+      font-size:11px;
+      color: var(--muted);
+    }
+
+    .item{
+      display:grid;
+      grid-template-columns: 72px 1fr;
+      gap:10px;
+      padding:9px 9px;
+      border-radius:12px;
+      border:1px solid transparent;
+    }
+
+    .item + .item{ margin-top:6px; }
+
+    .time{
+      font-weight:800;
+      letter-spacing:.2px;
+      font-variant-numeric: tabular-nums;
+      font-size: 12.5px;
+    }
+
+    .what{
+      display:flex;
+      flex-direction:column;
+      gap:3px;
+      min-width:0;
+    }
+
+    .what .title{
+      font-weight:800;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      font-size: 12.5px;
+    }
+
+    .what .desc{
+      color: var(--muted);
+      font-size: 11.5px;
+      line-height:1.25;
+    }
+
+    footer{
+      padding: 10px 22px 16px;
+      flex: 0 0 auto;
+    }
+
+    .quote{
+      color: var(--muted);
+      font-size: 12px;
+      line-height:1.35;
+      border-left: 3px solid rgba(134,247,209,.55);
+      padding-left:10px;
+    }
+
+    /* Impression: pas de fond noir sur feuille si tu veux */
+    @media print{
+      body{ background:#fff; padding:0; }
+      .page{ padding:0; border-radius:0; }
+      .card{ border-radius:0; box-shadow:none; }
+      .frame{ display:none; }
+
+      /* Si tu veux qu'il n'y ait pas de scroll en impression */
+      .schedule{ overflow:visible; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="page">
+    <div class="card">
+      <div class="noise"></div>
+
+      <header>
+        <div class="badge"><span class="dot"></span> Programme</div>
+        <h1>Moment de convivialité Familiale</h1>
+        <p class="subtitle">
+          Action de grâce pour l’année 2025 écoulée et engagement et souhait pour la nouvelle année — un moment de partage, de prière et de convivialité.
+        </p>
+
+        <div class="topline">
+          <div class="info">
+            <div>
+              <div class="k">Date</div>
+              <div class="v">Samedi et Dimanche 05 Janvier 2026</div>
+            </div>
+            <div>
+              <div class="k">Heure</div>
+              <div class="v">Samedi : 18h00 – Dimanche : 17h00</div>
+            </div>
+            <div>
+              <div class="k">Lieu</div>
+              <div class="v">Résidence ZANA - Faya Ephrata</div>
+            </div>
+            <div>
+              <div class="k">Tenue</div>
+              <div class="v">Chic & sobre</div>
+            </div>
+          </div>
+
+          <div class="host">
+            <div class="label">Famille hôte</div>
+            <div class="names">Famille KOFFI</div>
+            <div class="note">Contact : +225 07 58 44 46 36 • Accueil à partir du Samedi 18h00</div>
+          </div>
+        </div>
+      </header>
+
+      <main>
+        <section class="schedule">
+          <div class="section-title">
+            <h2>Déroulé</h2>
+            <span>Horaires indicatifs</span>
+          </div>
+
+          <!-- Tes items -->
+          <div class="item"><div class="time">18:00</div><div class="what"><div class="title">Accueil Familial</div><div class="desc">Installation, salutations, mise en place.</div></div></div>
+          <div class="item"><div class="time">19:30</div><div class="what"><div class="title">Ouverture</div><div class="desc">Bienvenue et temps de prière.</div></div></div>
+          <div class="item"><div class="time">20:15</div><div class="what"><div class="title">Départ pour le cinéma</div><div class="desc">Véhicules personnels et véhicules (YANGO).</div></div></div>
+          <div class="item"><div class="time">21:15</div><div class="what"><div class="title">Entrée en salle de cinéma</div><div class="desc">Quelques instructions avant.</div></div></div>
+          <div class="item"><div class="time">00:00</div><div class="what"><div class="title">Photo de famille soir de cinéma</div><div class="desc">Photo en famille + photos libres.</div></div></div>
+          <div class="item"><div class="time">00:15</div><div class="what"><div class="title">Départ pour Blockauss</div><div class="desc">Véhicules personnels et véhicules (YANGO).</div></div></div>
+          <div class="item"><div class="time">02:30</div><div class="what"><div class="title">Départ de Blockauss pour les maison</div><div class="desc">Véhicules personnels et véhicules (YANGO).</div></div></div>
+          <div class="item"><div class="time">03:30</div><div class="what"><div class="title">Repos (Excellente nuit à toutes et à tous)</div><div class="desc">Silence.</div></div></div>
+          <div class="item"><div class="time">07:30</div><div class="what"><div class="title">Préparations pour aller à la messe</div><div class="desc">Réveil et douches.</div></div></div>
+          <div class="item"><div class="time">08:30</div><div class="what"><div class="title">Départ pour la messe</div><div class="desc">Véhicules personnels et véhicules (YANGO).</div></div></div>
+          <div class="item"><div class="time">09:00</div><div class="what"><div class="title">Début de la messe</div><div class="desc">Intentions suivie de bénédiction : Messe d’action de grâce demandée par les familles KOUACOU, KOFFI, BILE, EKRA…</div></div></div>
+          <div class="item"><div class="time">11:30</div><div class="what"><div class="title">Retour de la messe</div><div class="desc">Cuisine, causeries conviviales, apéritifs et cocktails</div></div></div>
+          <div class="item"><div class="time">13:00</div><div class="what"><div class="title">Repas</div><div class="desc">Service par table.</div></div></div>
+          <div class="item"><div class="time">15:00</div><div class="what"><div class="title">Ambiance</div><div class="desc">Sort la phase.</div></div></div>
+          <div class="item"><div class="time">16:00</div><div class="what"><div class="title">Clôture</div><div class="desc">Remerciements finaux & départ progressif.</div></div></div>
+        </section>
+      </main>
+
+      <footer>
+        <div class="quote">
+          « Que, dans vos cœurs, règne la paix du Christ ; que la parole du Christ habite en vous dans toute sa richesse. »
+          <br><span style="opacity:.85">Col 3, 15a.16a</span>
+        </div>
+      </footer>
+    </div>
+
+    <div class="frame"></div>
+  </div>
+</body>
+</html>
